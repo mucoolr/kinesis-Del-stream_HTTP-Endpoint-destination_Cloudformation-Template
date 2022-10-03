@@ -1,0 +1,61 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: A sample template
+Parameters:
+    deliveryStreamName:
+        Type: String 
+    lambdaFunctionARN:
+        Type: String       
+    BucketName:
+        Type: String        
+Resources :
+    Deliverystream: 
+        Type: AWS::KinesisFirehose::DeliveryStream
+        Properties: 
+            DeliveryStreamName: !Ref deliveryStreamName
+            DeliveryStreamType: KinesisStreamAsSource
+            KinesisStreamSourceConfiguration: 
+              KinesisStreamARN: arn:aws:kinesis:us-east-1:<AWS-Account-No.>:stream/kin-001-dev-ctr
+              RoleARN: arn:aws:iam::<AWS-Account-No.>:role/service-role/KinesisFirehoseServiceRole-Delivery-stre-us-east-1-1662437187753
+            HttpEndpointDestinationConfiguration:
+              CloudWatchLoggingOptions:
+                Enabled: true
+                LogGroupName: /aws/kinesisfirehose/Delivery-stream-POC
+                LogStreamName: DestinationDelivery
+              EndpointConfiguration: 
+                Url: <Endpoint-URL>
+              ProcessingConfiguration: 
+                Enabled: true
+                Processors: 
+                - Type: Lambda 
+                  Parameters: 
+                  - ParameterName: LambdaArn 
+                    ParameterValue: !Ref lambdaFunctionARN
+              RoleARN: arn:aws:iam::<AWS-Account-No.>:role/service-role/KinesisFirehoseServiceRole-Delivery-stre-us-east-1-1662437187753
+              S3BackupMode: FailedDataOnly
+              S3Configuration:
+                BucketARN: !GetAtt S3Bucket.Arn
+                RoleARN: arn:aws:iam::<AWS-Account-No.>:role/service-role/KinesisFirehoseServiceRole-Delivery-stre-us-east-1-1662437187753
+    S3Bucket:
+        Type: AWS::S3::Bucket                  
+        Properties:
+            BucketName: !Ref BucketName
+    MyS3BucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket: !Ref S3Bucket
+        PolicyDocument:
+          Statement:
+            -
+              Action:
+                - s3:*
+              Effect: Allow
+              Resource:
+                - !Sub arn:aws:s3:::${S3Bucket}
+                - !Sub arn:aws:s3:::${S3Bucket}/*
+              Principal:
+                AWS:
+                  - '*'
+             
+
+                  
+              
